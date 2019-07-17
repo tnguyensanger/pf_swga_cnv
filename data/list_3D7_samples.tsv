@@ -1,0 +1,4 @@
+path	sample	library	lane	treatment
+/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/resource/3D7/3D7-10.bam	3D7_10-T1	12978906	15514_1#1__15514_2#1	sWGA
+/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/resource/3D7/3D7_gDNA.bam	PG51-gDNA	8356310	11142_2#8	gDNA
+/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/resource/3D7/3D7_WGA.bam	PG51-WGA	8356304	11142_2#2	WGA
