@@ -1,0 +1,61 @@
+#!/bin/bash
+#BSUB -P malaria-dk
+#BSUB -n 1
+#BSUB -q normal
+#BSUB -e /nfs/users/nfs_t/tn6/gitrepo/pf_swga_cnv/logs/pysamstats_gc.lsf.%J.%I.e.log
+#BSUB -o /nfs/users/nfs_t/tn6/gitrepo/pf_swga_cnv/logs/pysamstats_gc.lsf.%J.%I.o.log
+#BSUB -J pysamstats_gc[1-3090]%100
+#BSUB -M 1024
+#BSUB -R "select[mem>1024] rusage[mem=1024]"
+
+source $HOME/vrpipe_prod_env.sh
+set -e
+set -x
+
+
+# vrpipe-fileinfo --setup pf_swga_cnv_3D7_indel_realign_bqsr --metadata sample,library,lane --step "gatk_print_reads_gatk3_v2|recalibrated_bam_files"  | awk '{if ($1 == "path") {print $0"\tout_dir"} else {print $0"\t/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_3D7/output/pysamstats_gc"} }' > /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/resource/all_dataset.pysamstats_gc.input.fofn
+
+# vrpipe-fileinfo --setup pf_swga_cnv_wgs_indel_realign_bqsr --metadata sample,library,lane --step "gatk_print_reads_gatk3_v2|recalibrated_bam_files" | tail -n +2 | awk '{ print $0"\t/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/pysamstats_gc"} ' >> /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/resource/all_dataset.pysamstats_gc.input.fofn
+
+
+# vrpipe-fileinfo --setup pf_swga_plex_indel_realign_bqsr --metadata sample,library,lane --step "gatk_print_reads_gatk3_v2|recalibrated_bam_files" | tail -n +2 | awk '{ print $0"\t/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/output/pysamstats_gc"} ' >> /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/resource/all_dataset.pysamstats_gc.input.fofn
+
+# vrpipe-fileinfo --setup pf_swga_plex_indel_realign_bqsr_fix_miss_mate --metadata sample,library,lane --step "gatk_print_reads_gatk3_v2|recalibrated_bam_files" | tail -n +2 | awk '{ print $0"\t/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/output/pysamstats_gc"} ' >> /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/resource/all_dataset.pysamstats_gc.input.fofn
+
+
+
+CHROMS=(Pf3D7_10_v3 Pf3D7_07_v3 Pf3D7_03_v3 Pf3D7_13_v3 Pf3D7_11_v3 Pf3D7_14_v3 Pf3D7_09_v3 Pf3D7_01_v3 Pf3D7_12_v3 Pf3D7_08_v3 Pf3D7_06_v3 Pf3D7_04_v3 Pf3D7_02_v3 M76611 PFC10_API_IRAB)
+
+REFERENCE_FASTA=/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/resource/3D7/3D7_V3.fasta
+
+
+FOFN=/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/resource/all_dataset.pysamstats_gc.input.fofn
+
+FOFN_IDX=$(( $LSB_JOBINDEX + 2 ))  # Offset because there is a header line in the fofn
+
+TOTAL_CHROMS=${#CHROMS[@]}
+LSB_JOBINDEX_0=$((LSB_JOBINDEX - 1))  # 0-based LSF job LSB_JOBINDEX
+FOFN_IDX_0=$(( LSB_JOBINDEX_0 / TOTAL_CHROMS))  # 0based fofn index
+FOFN_IDX=$(( FOFN_IDX_0 + 1 ))  # 1based fofn index
+
+# 15  (don't do chromo 5) chromosomes x 206 files
+CHROM_IDX_0=$(( LSB_JOBINDEX_0 %  TOTAL_CHROMS ))  # 0based chromosome index
+CHROM=${CHROMS[$CHROM_IDX_0]}
+
+
+BAM=$( sed -n "${FOFN_IDX}p"  $FOFN | cut -f 1  )
+SAMPLE=$( sed -n "${FOFN_IDX}p"  $FOFN | cut -f 2  )
+LIBRARY=$( sed -n "${FOFN_IDX}p"  $FOFN | cut -f 3  )
+LANE=$( sed -n "${FOFN_IDX}p"  $FOFN | cut -f 4  )
+OUTPUT_DIR=$( sed -n "${FOFN_IDX}p"  $FOFN | cut -f 5  )
+
+
+
+echo "Using LSB_JOBINDEX=${LSB_JOBINDEX} which translates to FOFN_IDX=$FOFN_IDX in FOFN=$FOFN, where FOFN_IDX is 1-based and header is FOFN_IDX=1"
+echo SAMPLE=$SAMPLE  LIBRARY=$LIBRARY LANE=$LANE BAM=$BAM OUTPUT_DIR=$OUTPUT_DIR CHROM=$CHROM
+
+
+/nfs/team112/pythonbrew/pythons/Python-2.7.2.farm3/bin/pysamstats -t coverage_gc -c $CHROM \
+  --output $OUTPUT_DIR/$SAMPLE.$LIBRARY.$LANE.$CHROM.pysamstats_gc.txt  \
+  -f $REFERENCE_FASTA \
+  $BAM

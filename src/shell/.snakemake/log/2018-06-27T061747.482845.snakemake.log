@@ -1,0 +1,38 @@
+Building DAG of jobs...
+Using shell: /usr/local/bin/bash
+Provided cluster nodes: 1
+Job counts:
+	count	jobs
+	1	all
+	1	call_cnv
+	1	filter_mean_rd
+	1	filter_orig_rd
+	1	mean_rd
+	1	norm_by_pc
+	1	output_cnv_csv
+	1	pca_on_filtered_mean_rd
+	1	zscore
+	9
+
+rule filter_mean_rd:
+    input: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.locus_GC.txt, /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.extreme_gc_targets.txt, /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.RD.txt
+    output: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.filtered_centered.RD.txt
+    jobid: 9
+
+Submitted job 9 with external jobid 'Job <3024410> is submitted to queue <normal>.'.
+Finished job 9.
+1 of 9 steps (11%) done
+
+rule pca_on_filtered_mean_rd:
+    input: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.filtered_centered.RD.txt
+    output: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.RD_PCA
+    jobid: 10
+
+Submitted job 10 with external jobid 'Job <3024411> is submitted to queue <normal>.'.
+    Error in rule pca_on_filtered_mean_rd:
+        jobid: 10
+        output: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.RD_PCA
+
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: /nfs/users/nfs_t/tn6/gitrepo/pf_swga_cnv/src/shell/.snakemake/log/2018-06-27T061747.482845.snakemake.log

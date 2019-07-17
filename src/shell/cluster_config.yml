@@ -1,0 +1,22 @@
+__default__:
+  project: "malaria-dk"
+  ncpus: 1
+  queue: normal
+  memory: 500
+  resources: "select[mem>500] rusage[mem=500]"
+  jobname: "{rule}.{wildcards}"
+  output: "logs/cluster/{rule}.{wildcards}.out"
+  error: "logs/cluster/{rule}.{wildcards}.err"
+
+depth_of_cov:
+  ncpus: 1
+  memory: 12000
+  resources: "select[mem>12000] rusage[mem=12000]"
+  jobname: "{rule}.{wildcards}"
+#
+#
+# cmp_vcf_gt:
+#   ncpus: 1
+#   memory: 16000
+#   resources: "select[mem>16000] rusage[mem=16000]"
+#   jobname: "{rule}.{wildcards}"

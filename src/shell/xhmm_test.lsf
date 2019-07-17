@@ -1,0 +1,116 @@
+#!/bin/bash
+#BSUB -P malaria-dk
+#BSUB -n 1
+#BSUB -q normal
+#BSUB -e /nfs/users/nfs_t/tn6/gitrepo/pf_swga_cnv/logs/xhmm_test.lsf.%J.%I.e.log
+#BSUB -o /nfs/users/nfs_t/tn6/gitrepo/pf_swga_cnv/logs/xhmm_test.lsf.%J.%I.o.log
+#BSUB -J xhmm_test[1-1]
+#BSUB -M 12288
+#BSUB -R "select[mem>12288] rusage[mem=12288]"
+
+source $HOME/vrpipe_prod_env.sh
+set -e
+set -x
+
+
+OUTPUT_DIR=/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/output/xhmm
+REFERENCE_FASTA=/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/resource/3D7/3D7_V3.fasta
+INTERVAL_LIST=/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/resource/3D7_v3.window300bp.bed
+
+#
+# # Only run 20295 lane 4 has 36-plex samples swga'ed for 16 hours with no bead cleanup
+# find /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/output/depth_of_cov -name "*.win300.sample_interval_summary" | grep 20295_4 > $OUTPUT_DIR/xhmm_test.sample_interval_summary.list.txt
+#
+#
+# echo "/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_3D7/output/depth_of_cov/3D7_10-T1.12978906.unknown.sample_interval_summary" >> $OUTPUT_DIR/xhmm_test.sample_interval_summary.list.txt
+
+
+# Merge the gatk sample interval summaries
+/nfs/team112/tn6/programs/xhmm/statgen-xhmm-cc14e528d909/xhmm --mergeGATKdepths -o $OUTPUT_DIR/xhmm_test.RD.txt \
+--GATKdepthsList $OUTPUT_DIR/xhmm_test.sample_interval_summary.list.txt
+
+# Optionally, run GATK to calculate the per-target GC content and create a list of the targets with extreme GC content:
+java -jar /software/vertres/bin-external/GenomeAnalysisTK-3.6/GenomeAnalysisTK.jar \
+         -T GCContentByInterval \
+         -R $REFERENCE_FASTA \
+         -o $OUTPUT_DIR/xhmm_test.locus_GC.txt \
+         -L $INTERVAL_LIST
+
+
+cat $OUTPUT_DIR/xhmm_test.locus_GC.txt | awk '{if ($2 < 0.1 || $2 > 0.9) print $1}' > $OUTPUT_DIR/xhmm_test.extreme_gc_targets.txt
+
+
+
+# Optionally, run PLINK/Seq to calculate the fraction of repeat-masked bases in each target and create a list of those to filter out:
+# This is geared towards humans.  Instead, we rely on GATK Depth of Coverage to filter out low map quality reads.
+
+# /nfs/team112/tn6/programs/xhmm/statgen-xhmm-cc14e528d909/sources/scripts/interval_list_to_pseq_reg $INTERVAL_LIST > $OUTPUT_DIR/xhmm_test.targets.reg
+#
+# /nfs/team112/tn6/programs/plinkseq/plinkseq-0.10/pseq . loc-load --locdb $OUTPUT_DIR/xhmm_test.targets.LOCDB --file $OUTPUT_DIR/xhmm_test.targets.reg --group targets --out $OUTPUT_DIR/xhmm_test.targets.LOCDB.loc-load
+#
+# /nfs/team112/tn6/programs/plinkseq/plinkseq-0.10/pseq . loc-stats --locdb $OUTPUT_DIR/xhmm_test.targets.LOCDB --group targets --seqdb ./seqdb | \
+# awk '{if (NR > 1) print $_}' | sort -k1 -g | awk '{print $10}' | paste $INTERVAL_LIST - | \
+# awk '{print $1"\t"$2}' \
+# > $OUTPUT_DIR/xhmm_test.locus_complexity.txt
+#
+# cat $OUTPUT_DIR/xhmm_test.locus_complexity.txt | awk '{if ($2 > 0.25) print $1}' \
+# > $OUTPUT_DIR/xhmm_test.low_complexity_targets.txt
+
+
+# Filters samples and targets and then mean-centers the targets:
+/nfs/team112/tn6/programs/xhmm/statgen-xhmm-cc14e528d909/xhmm --matrix -r $OUTPUT_DIR/xhmm_test.RD.txt --centerData --centerType target \
+-o $OUTPUT_DIR/xhmm_test.filtered_centered.RD.txt \
+--outputExcludedTargets $OUTPUT_DIR/xhmm_test.filtered_centered.RD.txt.filtered_targets.txt \
+--outputExcludedSamples $OUTPUT_DIR/xhmm_test.filtered_centered.RD.txt.filtered_samples.txt \
+--excludeTargets $OUTPUT_DIR/xhmm_test.extreme_gc_targets.txt \
+--minTargetSize 10 --maxTargetSize 10000 \
+--minMeanTargetRD 10 --maxMeanTargetRD 1000 \
+--minMeanSampleRD 25 --maxMeanSampleRD 1000 \
+--maxSdSampleRD 700
+
+
+# Runs PCA on mean-centered data:
+/nfs/team112/tn6/programs/xhmm/statgen-xhmm-cc14e528d909/xhmm --PCA -r $OUTPUT_DIR/xhmm_test.filtered_centered.RD.txt --PCAfiles $OUTPUT_DIR/xhmm_test.RD_PCA
+
+
+# Normalizes mean-centered data using PCA information:
+/nfs/team112/tn6/programs/xhmm/statgen-xhmm-cc14e528d909/xhmm --normalize -r $OUTPUT_DIR/xhmm_test.filtered_centered.RD.txt --PCAfiles $OUTPUT_DIR/xhmm_test.RD_PCA \
+--normalizeOutput $OUTPUT_DIR/xhmm_test.PCA_normalized.txt \
+--PCnormalizeMethod PVE_mean --PVE_mean_factor 0.7
+
+
+# Filters and z-score centers (by sample) the PCA-normalized data:
+/nfs/team112/tn6/programs/xhmm/statgen-xhmm-cc14e528d909/xhmm --matrix -r $OUTPUT_DIR/xhmm_test.PCA_normalized.txt --centerData --centerType sample --zScoreData \
+-o $OUTPUT_DIR/xhmm_test.PCA_normalized.filtered.sample_zscores.RD.txt \
+--outputExcludedTargets $OUTPUT_DIR/xhmm_test.PCA_normalized.filtered.sample_zscores.RD.txt.filtered_targets.txt \
+--outputExcludedSamples $OUTPUT_DIR/xhmm_test.PCA_normalized.filtered.sample_zscores.RD.txt.filtered_samples.txt \
+--maxSdTargetRD 30
+
+
+# Filters original read-depth data to be the same as filtered, normalized data:
+/nfs/team112/tn6/programs/xhmm/statgen-xhmm-cc14e528d909/xhmm --matrix -r $OUTPUT_DIR/xhmm_test.RD.txt \
+--excludeTargets $OUTPUT_DIR/xhmm_test.filtered_centered.RD.txt.filtered_targets.txt \
+--excludeTargets $OUTPUT_DIR/xhmm_test.PCA_normalized.filtered.sample_zscores.RD.txt.filtered_targets.txt \
+--excludeSamples $OUTPUT_DIR/xhmm_test.filtered_centered.RD.txt.filtered_samples.txt \
+--excludeSamples $OUTPUT_DIR/xhmm_test.PCA_normalized.filtered.sample_zscores.RD.txt.filtered_samples.txt \
+-o $OUTPUT_DIR/xhmm_test.same_filtered.RD.txt
+
+
+# Discovers CNVs in normalized data:
+/nfs/team112/tn6/programs/xhmm/statgen-xhmm-cc14e528d909/xhmm --discover -p $OUTPUT_DIR/xhmm_test.params.txt \
+-r $OUTPUT_DIR/xhmm_test.PCA_normalized.filtered.sample_zscores.RD.txt -R $OUTPUT_DIR/xhmm_test.same_filtered.RD.txt \
+-c $OUTPUT_DIR/xhmm_test.xcnv -a $OUTPUT_DIR/xhmm_test.aux_xcnv -s $OUTPUT_DIR/xhmm_test
+
+
+
+
+# Genotypes discovered CNVs in all samples:
+/nfs/team112/tn6/programs/xhmm/statgen-xhmm-cc14e528d909/xhmm --genotype -p $OUTPUT_DIR/xhmm_test.params.txt \
+-r $OUTPUT_DIR/xhmm_test.PCA_normalized.filtered.sample_zscores.RD.txt -R $OUTPUT_DIR/xhmm_test.same_filtered.RD.txt \
+-g $OUTPUT_DIR/xhmm_test.xcnv -F $REFERENCE_FASTA \
+-v $OUTPUT_DIR/xhmm_test.vcf
+
+
+python $HOME/gitrepo/pf_swga_cnv/src/python/xhmm_interval_to_win.py 
+
+# /nfs/team112/tn6/programs/plinkseq/plinkseq-0.10/pseq  . loc-intersect --group refseq --locdb ./RefSeq.locdb --file $INTERVAL_LIST --out $OUTPUT_DIR/xhmm_test.annotated_targets.refseq

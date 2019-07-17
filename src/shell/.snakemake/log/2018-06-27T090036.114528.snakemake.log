@@ -1,0 +1,92 @@
+Building DAG of jobs...
+Using shell: /usr/local/bin/bash
+Provided cluster nodes: 1
+Job counts:
+	count	jobs
+	1	all
+	1	call_cnv
+	1	filter_mean_rd
+	1	filter_orig_rd
+	1	mean_rd
+	1	norm_by_pc
+	1	output_cnv_csv
+	1	pca_on_filtered_mean_rd
+	1	zscore
+	9
+
+rule filter_mean_rd:
+    input: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.locus_GC.txt, /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.extreme_gc_targets.txt, /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.RD.txt
+    output: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.filtered_centered.RD.txt
+    jobid: 10
+
+Submitted job 10 with external jobid 'Job <3027835> is submitted to queue <normal>.'.
+Finished job 10.
+1 of 9 steps (11%) done
+
+rule pca_on_filtered_mean_rd:
+    input: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.filtered_centered.RD.txt
+    output: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.RD_PCA.PC_LOADINGS.txt
+    jobid: 11
+
+Submitted job 11 with external jobid 'Job <3027846> is submitted to queue <normal>.'.
+Finished job 11.
+2 of 9 steps (22%) done
+
+rule norm_by_pc:
+    input: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.filtered_centered.RD.txt, /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.RD_PCA.PC_LOADINGS.txt
+    output: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.PCA_normalized.txt
+    jobid: 8
+
+Submitted job 8 with external jobid 'Job <3027853> is submitted to queue <normal>.'.
+Finished job 8.
+3 of 9 steps (33%) done
+
+rule zscore:
+    input: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.PCA_normalized.txt
+    output: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.PCA_normalized.filtered.sample_zscores.RD.txt, /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.PCA_normalized.filtered.sample_zscores.RD.txt.filtered_samples.txt, /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.PCA_normalized.filtered.sample_zscores.RD.txt.filtered_targets.txt
+    jobid: 6
+
+Submitted job 6 with external jobid 'Job <3027860> is submitted to queue <normal>.'.
+Finished job 6.
+4 of 9 steps (44%) done
+
+rule filter_orig_rd:
+    input: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.RD.txt, /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.PCA_normalized.filtered.sample_zscores.RD.txt.filtered_targets.txt, /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.PCA_normalized.filtered.sample_zscores.RD.txt.filtered_samples.txt
+    output: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.same_filtered.RD.txt
+    jobid: 5
+
+Submitted job 5 with external jobid 'Job <3027876> is submitted to queue <normal>.'.
+Finished job 5.
+5 of 9 steps (56%) done
+
+rule call_cnv:
+    input: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.PCA_normalized.filtered.sample_zscores.RD.txt, /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.same_filtered.RD.txt
+    output: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.xcnv
+    jobid: 3
+
+Submitted job 3 with external jobid 'Job <3027889> is submitted to queue <normal>.'.
+Finished job 3.
+6 of 9 steps (67%) done
+
+rule mean_rd:
+    input: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.locus_GC.txt
+    output: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.centered.RD.txt, /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.centered.RD.txt.filtered_targets.txt, /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.centered.RD.txt.filtered_samples.txt
+    jobid: 2
+
+Submitted job 2 with external jobid 'Job <3028016> is submitted to queue <normal>.'.
+Finished job 2.
+7 of 9 steps (78%) done
+
+rule output_cnv_csv:
+    input: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.xcnv
+    output: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.xcnv.win300.tsv
+    jobid: 1
+
+Submitted job 1 with external jobid 'Job <3028090> is submitted to queue <normal>.'.
+    Error in rule output_cnv_csv:
+        jobid: 1
+        output: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.xcnv.win300.tsv
+
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: /nfs/users/nfs_t/tn6/gitrepo/pf_swga_cnv/src/shell/.snakemake/log/2018-06-27T090036.114528.snakemake.log

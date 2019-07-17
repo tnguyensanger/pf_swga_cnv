@@ -1,0 +1,25 @@
+Building DAG of jobs...
+Using shell: /usr/local/bin/bash
+Provided cluster nodes: 1
+Job counts:
+	count	jobs
+	1	all
+	1	output_cnv_csv
+	2
+
+rule output_cnv_csv:
+    input: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.xcnv
+    output: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.xcnv.win300.tsv
+    jobid: 2
+
+Submitted job 2 with external jobid 'Job <3028514> is submitted to queue <normal>.'.
+Finished job 2.
+1 of 2 steps (50%) done
+
+localrule all:
+    input: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.xcnv.win300.tsv, /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.centered.RD.txt
+    jobid: 0
+
+Finished job 0.
+2 of 2 steps (100%) done
+Complete log: /nfs/users/nfs_t/tn6/gitrepo/pf_swga_cnv/src/shell/.snakemake/log/2018-06-27T090929.346172.snakemake.log

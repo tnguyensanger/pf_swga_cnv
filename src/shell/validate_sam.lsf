@@ -1,0 +1,15 @@
+#!/bin/bash
+#BSUB -P malaria-dk
+#BSUB -n 1
+#BSUB -q normal
+#BSUB -e /nfs/users/nfs_t/tn6/gitrepo/pf_swga_cnv/logs/validate_sam.lsf.%J.%I.e.log
+#BSUB -o /nfs/users/nfs_t/tn6/gitrepo/pf_swga_cnv/logs/validate_sam.lsf.%J.%I.o.log
+#BSUB -J pf_swga_cnv[1]  # parallelize each nopcr, pf61 bam
+#BSUB -M 4096
+#BSUB -R "select[mem>4096] rusage[mem=4096]"
+
+source $HOME/vrpipe_prod_env.sh
+set -e
+set -x
+
+/software/jdk1.8.0_74/bin/java -Xmx2975m -Xms2975m -Djava.io.tmpdir=/lustre/scratch118/malaria/team112/pipelines/setups/pf_swga/output/d/f/7/2/221237/6_bam_validate_v2/fBbEjq1cgE -server -XX:+UseSerialGC -jar /nfs/team112_internal/production/tools/bin/picard-tools-2.6.0/picard.jar ValidateSamFile INPUT=/lustre/scratch118/malaria/team112/pipelines/setups/pf_swga/output/d/f/7/2/221237/4_bam_fix_mates_v2/pe.1.markdup.reali.sort.bam OUTPUT=/lustre/scratch118/malaria/team112/pipelines/setups/pf_swga/output/d/f/7/2/221237/6_bam_validate_v2/pe.1.markdup.reali.sort.validation.txt VALIDATION_STRINGENCY=SILENT

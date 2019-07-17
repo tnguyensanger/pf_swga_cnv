@@ -1,0 +1,29 @@
+#!/bin/bash
+#BSUB -P malaria-dk
+#BSUB -n 1
+#BSUB -q normal
+#BSUB -e /nfs/users/nfs_t/tn6/gitrepo/pf_swga_cnv/logs/ppq_import.lsf.%J.%I.e.log
+#BSUB -o /nfs/users/nfs_t/tn6/gitrepo/pf_swga_cnv/logs/ppq_import.lsf.%J.%I.o.log
+#BSUB -J ppq_import[2-12]
+#BSUB -M 500
+#BSUB -R "select[mem>500] rusage[mem=500]"
+
+source $HOME/vrpipe_prod_env.sh
+set -e
+set -x
+
+
+PPQ_OUTPUT_DIR=/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/input/ppq_resistance
+
+
+PPQ_SAMPLES_LIST=/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/resource/ppq_samples.txt
+
+
+SAMPLE=$( sed -n "${LSB_JOBINDEX}p"  $PPQ_SAMPLES_LIST  )
+
+collection=$(imeta qu -z archive -d release = 'ppq_published' and sample like "${SAMPLE}%" | grep collection | cut -f 2 -d " ")
+dataobj=$( imeta qu -z archive -d release = 'ppq_published' and sample like "${SAMPLE}%" | grep dataObj | cut -f 2 -d " ")
+
+echo downloading $collection/$dataobj
+
+iget -K $collection/$dataobj /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/input/ppq_resistance

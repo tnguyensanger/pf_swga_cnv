@@ -1,0 +1,23 @@
+Building DAG of jobs...
+Using shell: /usr/local/bin/bash
+Provided cluster nodes: 1
+Job counts:
+	count	jobs
+	1	all
+	1	call_cnv
+	1	filter_mean_rd
+	1	filter_orig_rd
+	1	interval_gc
+	1	mean_rd
+	1	norm_by_pc
+	1	output_cnv_csv
+	1	pca_on_filtered_mean_rd
+	1	zscore
+	10
+
+rule interval_gc:
+    output: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.locus_GC.txt, /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/xhmm/xhmm_test.extreme_gc_targets.txt
+    jobid: 4
+
+RuleException in line 47 of /nfs/users/nfs_t/tn6/gitrepo/pf_swga_cnv/src/shell/xhmm.snakefile:
+NameError: The name 'if ($2 < 0' is unknown in this context. Please make sure that you defined that variable. Also note that braces not used for variable access have to be escaped by repeating them, i.e. {{print $1}}

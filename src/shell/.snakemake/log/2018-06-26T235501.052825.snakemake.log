@@ -1,0 +1,26 @@
+Building DAG of jobs...
+Using shell: /usr/local/bin/bash
+Provided cluster nodes: 1
+Job counts:
+	count	jobs
+	1	all
+	1	depth_of_cov
+	2
+
+rule depth_of_cov:
+    input: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/input/ppq_resistance/PH1008-C.bam
+    output: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/depth_of_cov/PH1008-C.unknown.unknown.win300.sample_interval_summary
+    jobid: 1
+    wildcards: lane=unknown, library=unknown, sample=PH1008-C
+
+Submitted job 1 with external jobid 'Job <3022241> is submitted to queue <normal>.'.
+Finished job 1.
+1 of 2 steps (50%) done
+
+localrule all:
+    input: /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/depth_of_cov/PH1008-C.unknown.unknown.win300.sample_interval_summary
+    jobid: 0
+
+Finished job 0.
+2 of 2 steps (100%) done
+Complete log: /nfs/users/nfs_t/tn6/gitrepo/pf_swga_cnv/src/shell/.snakemake/log/2018-06-26T235501.052825.snakemake.log

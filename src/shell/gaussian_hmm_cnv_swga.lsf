@@ -1,0 +1,47 @@
+#!/bin/bash
+#BSUB -P malaria-dk
+#BSUB -n 1
+#BSUB -q normal
+#BSUB -e /nfs/users/nfs_t/tn6/gitrepo/pf_swga_cnv/logs/gaussian_hmm_cnv_swga.lsf.%J.%I.e.log
+#BSUB -o /nfs/users/nfs_t/tn6/gitrepo/pf_swga_cnv/logs/gaussian_hmm_cnv_swga.lsf.%J.%I.o.log
+#BSUB -J gaussian_hmm_cnv_swga[1-160]
+#BSUB -M 1024
+#BSUB -R "select[mem>1024] rusage[mem=1024]"
+
+source $HOME/vrpipe_prod_env.sh
+set -e
+set -x
+
+
+# vrpipe-fileinfo --setup pf_swga_cnv_3D7_indel_realign_bqsr --metadata sample,library,lane --step "gatk_print_reads_gatk3_v2|recalibrated_bam_files"  | awk '{if ($1 == "path") {print $0"\tout_dir"} else {print $0"\t/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_3D7/output/pysamstats_gc"} }' > /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/resource/all_dataset.pysamstats_gc.input.fofn
+
+# vrpipe-fileinfo --setup pf_swga_cnv_wgs_indel_realign_bqsr --metadata sample,library,lane --step "gatk_print_reads_gatk3_v2|recalibrated_bam_files" | tail -n +2 | awk '{ print $0"\t/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/pysamstats_gc"} ' >> /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/resource/all_dataset.pysamstats_gc.input.fofn
+
+
+# vrpipe-fileinfo --setup pf_swga_plex_indel_realign_bqsr --metadata sample,library,lane --step "gatk_print_reads_gatk3_v2|recalibrated_bam_files" | tail -n +2 | awk '{ print $0"\t/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/output/pysamstats_gc"} ' >> /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/resource/all_dataset.pysamstats_gc.input.fofn
+
+# vrpipe-fileinfo --setup pf_swga_plex_indel_realign_bqsr_fix_miss_mate --metadata sample,library,lane --step "gatk_print_reads_gatk3_v2|recalibrated_bam_files" | tail -n +2 | awk '{ print $0"\t/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/output/pysamstats_gc"} ' >> /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/resource/all_dataset.pysamstats_gc.input.fofn
+
+# grep "cnv/out\|path" /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/resource/all_dataset.pysamstats_gc.input.fofn > /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/resource/pf_swga_cnv.pysamstats_gc.input.fofn
+
+source activate pf_swga_cnv_analysis_py35_linux
+
+REFERENCE_FASTA=/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/resource/3D7/3D7_V3.fasta
+OUTPUT_DIR=/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/output/gaussian_hmm_cnv
+
+FOFN=/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/resource/pf_swga_cnv.pysamstats_gc.input.fofn
+
+FOFN_IDX=$(( $LSB_JOBINDEX + 1 ))  # Offset because there is a header line in the fofn
+
+
+BAM=$( sed -n "${FOFN_IDX}p"  $FOFN | cut -f 1  )
+SAMPLE=$( sed -n "${FOFN_IDX}p"  $FOFN | cut -f 2  )
+LIBRARY=$( sed -n "${FOFN_IDX}p"  $FOFN | cut -f 3  )
+LANE=$( sed -n "${FOFN_IDX}p"  $FOFN | cut -f 4  )
+PYSAM_DIR=$( sed -n "${FOFN_IDX}p"  $FOFN | cut -f 5  )
+
+echo "Using LSB_JOBINDEX=${LSB_JOBINDEX} which translates to FOFN_IDX=$FOFN_IDX in FOFN=$FOFN, where FOFN_IDX is 1-based and header is FOFN_IDX=1"
+echo SAMPLE=$SAMPLE  LIBRARY=$LIBRARY LANE=$LANE BAM=$BAM PYSAM_DIR=$PYSAM_DIR  PYSAM_GC=$PYSAM_DIR/$SAMPLE.$LIBRARY.$LANE.pysamstats_gc.txt
+
+
+python $HOME/gitrepo/pf_swga_cnv/src/python/gaussian_hmm_cnv.py -pysam_gc $PYSAM_DIR/$SAMPLE.$LIBRARY.$LANE.pysamstats_gc.txt -out_tsv $OUTPUT_DIR/$SAMPLE.$LIBRARY.$LANE.cnv.tsv

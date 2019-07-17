@@ -1,0 +1,55 @@
+#!/bin/bash
+#BSUB -P malaria-dk
+#BSUB -n 1
+#BSUB -q normal
+#BSUB -e /nfs/users/nfs_t/tn6/gitrepo/pf_swga_cnv/logs/gc_content_by_interval_swga.win300.lsf.%J.%I.e.log
+#BSUB -o /nfs/users/nfs_t/tn6/gitrepo/pf_swga_cnv/logs/gc_content_by_interval_swga.win300.lsf.%J.%I.o.log
+#BSUB -J gc_content_by_interval_swga.win300[1-1]
+#BSUB -M 12288
+#BSUB -R "select[mem>12288] rusage[mem=12288]"
+
+source $HOME/vrpipe_prod_env.sh
+set -e
+set -x
+
+
+OUTPUT_DIR=/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/output/depth_of_cov
+
+
+
+
+# vrpipe-fileinfo --setup pf_swga_plex_indel_realign_bqsr --metadata sample,library,lane --step "gatk_print_reads_gatk3_v2|recalibrated_bam_files" > /lustre/scratch118/malaria/team112/pipelines/setups/pf_swga/resource/pf_swga_plex_indel_realign_bqsr.output.fofn
+# vrpipe-fileinfo --setup pf_swga_plex_indel_realign_bqsr_fix_miss_mate --metadata sample,library,lane --step "gatk_print_reads_gatk3_v2|recalibrated_bam_files" | tail -n +2 >> /lustre/scratch118/malaria/team112/pipelines/setups/pf_swga/resource/pf_swga_plex_indel_realign_bqsr.output.fofn
+
+# vrpipe-fileinfo --setup pf_swga_cnv_3D7_indel_realign_bqsr --metadata sample,library,lane --step "gatk_print_reads_gatk3_v2|recalibrated_bam_files" > /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_3D7/resource/pf_swga_cnv_3D7_indel_realign_bqsr.output.fofn
+# vrpipe-fileinfo --setup pf_swga_cnv_wgs_indel_realign_bqsr --metadata sample,library,lane --step "gatk_print_reads_gatk3_v2|recalibrated_bam_files" > /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/resource/pf_swga_cnv_wgs_indel_realign_bqsr.output.fofn
+
+INTERVAL_LIST=/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/resource/3D7_v3.window300bp.bed
+REFERENCE_FASTA=/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/resource/3D7/3D7_V3.fasta
+
+
+
+# Optionally, run GATK to calculate the per-target GC content and create a list of the targets with extreme GC content:
+java -jar /software/vertres/bin-external/GenomeAnalysisTK-3.6/GenomeAnalysisTK.jar \
+         -T GCContentByInterval \
+         -R $REFERENCE_FASTA \
+         -o $OUTPUT_DIR/xhmm_test.locus_GC.txt \
+         -L $INTERVAL_LIST
+
+
+cat $OUTPUT_DIR/xhmm_test.locus_GC.txt | awk '{if ($2 < 0.1 || $2 > 0.9) print $1}' > $OUTPUT_DIR/xhmm_test.extreme_gc_targets.txt
+
+
+
+# Optionally, run PLINK/Seq to calculate the fraction of repeat-masked bases in each target and create a list of those to filter out:
+./sources/scripts/interval_list_to_pseq_reg EXOME.interval_list > ./EXOME.targets.reg
+
+pseq . loc-load --locdb ./EXOME.targets.LOCDB --file ./EXOME.targets.reg --group targets --out ./EXOME.targets.LOCDB.loc-load
+
+pseq . loc-stats --locdb ./EXOME.targets.LOCDB --group targets --seqdb ./seqdb | \
+awk '{if (NR > 1) print $_}' | sort -k1 -g | awk '{print $10}' | paste ./EXOME.interval_list - | \
+awk '{print $1"\t"$2}' \
+> ./DATA.locus_complexity.txt
+
+cat ./DATA.locus_complexity.txt | awk '{if ($2 > 0.25) print $1}' \
+> ./low_complexity_targets.txt

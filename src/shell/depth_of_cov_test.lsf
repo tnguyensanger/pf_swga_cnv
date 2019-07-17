@@ -1,0 +1,57 @@
+#!/bin/bash
+#BSUB -P malaria-dk
+#BSUB -n 1
+#BSUB -q normal
+#BSUB -e /nfs/users/nfs_t/tn6/gitrepo/pf_swga_cnv/logs/depth_of_cov_test.lsf.%J.%I.e.log
+#BSUB -o /nfs/users/nfs_t/tn6/gitrepo/pf_swga_cnv/logs/depth_of_cov_test.lsf.%J.%I.o.log
+#BSUB -J depth_of_cov_test[1-1]  # parallelize each nopcr, pf61 bam
+#BSUB -M 12288
+#BSUB -R "select[mem>12288] rusage[mem=12288]"
+
+source $HOME/vrpipe_prod_env.sh
+set -e
+set -x
+
+
+OUTPUT_DIR=/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/output/depth_of_cov/swga
+
+
+
+
+# vrpipe-fileinfo --setup pf_swga_plex_indel_realign_bqsr --metadata sample,library,lane --step "gatk_print_reads_gatk3_v2|recalibrated_bam_files" > /lustre/scratch118/malaria/team112/pipelines/setups/pf_swga/resource/pf_swga_plex_indel_realign_bqsr.output.fofn
+# vrpipe-fileinfo --setup pf_swga_cnv_3D7_indel_realign_bqsr --metadata sample,library,lane --step "gatk_print_reads_gatk3_v2|recalibrated_bam_files" > /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_3D7/resource/pf_swga_cnv_3D7_indel_realign_bqsr.output.fofn
+# vrpipe-fileinfo --setup pf_swga_cnv_wgs_indel_realign_bqsr --metadata sample,library,lane --step "gatk_print_reads_gatk3_v2|recalibrated_bam_files" > /lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/resource/pf_swga_cnv_wgs_indel_realign_bqsr.output.fofn
+
+# We already know that there are only 86 PF61 samples but 96 NoPCR samples,
+# so we only use the subset of samples listed in PF61 fofn in our LSB_JOBINDEX.
+REFERENCE_FASTA=/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv/resource/3D7/3D7_V3.fasta
+
+
+PF_SWGA_FOFN=/lustre/scratch118/malaria/team112/pipelines/setups/pf_swga/resource/pf_swga_plex_indel_realign_bqsr.output.fofn
+
+# FOFN=$PF_SWGA_FOFN
+# FOFN_IDX=$(( $LSB_JOBINDEX + 1 ))  # Offset because there is a header line in the fofn
+#
+#
+# BAM=$( sed -n "${FOFN_IDX}p"  $FOFN | cut -f 1  )
+# SAMPLE=$( sed -n "${FOFN_IDX}p"  $FOFN | cut -f 2  )
+# LIBRARY=$( sed -n "${FOFN_IDX}p"  $FOFN | cut -f 3  )
+# LANE=$( sed -n "${FOFN_IDX}p"  $FOFN | cut -f 4  )
+#
+# echo "Using LSB_JOBINDEX=${LSB_JOBINDEX} which translates to FOFN_IDX=$FOFN_IDX in FOFN=$FOFN, where FOFN_IDX is 1-based and header is FOFN_IDX=1"
+# echo SAMPLE=$SAMPLE  LIBRARY=$LIBRARY LANE=$LANE BAM=$BAM
+# echo "Using LSB_JOBINDEX=${LSB_JOBINDEX} which translates to FOFN_IDX=$FOFN_IDX in FOFN=$FOFN, where FOFN_IDX is 1-based and header is FOFN_IDX=1"
+# echo SAMPLE=$SAMPLE
+
+# touch $OUTPUT_DIR/test_lsf.$LSB_JOBINDEX.$FOFN_IDX.$SAMPLE.$LIBRARY.$LANE.txt
+
+java -jar /software/vertres/bin-external/GenomeAnalysisTK-3.6/GenomeAnalysisTK.jar \
+         -T DepthOfCoverage \
+         -R $REFERENCE_FASTA \
+         -o $OUTPUT_DIR/PF1075-CxW.16880604.20295_4_25 \
+         -I /lustre/scratch118/malaria/team112/pipelines/setups/pf_swga/output/8/7/d/3/221530/3_gatk_print_reads_gatk3_v2/pe.1.markdup.reali.sort.fixed.recal.bam \
+         --countType COUNT_FRAGMENTS         \
+         --includeRefNSites \
+         --minBaseQuality 0 \
+         --minMappingQuality 20 \
+         --start 1 --stop 7000 --nBins 7001

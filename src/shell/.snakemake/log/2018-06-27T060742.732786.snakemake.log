@@ -1,0 +1,2 @@
+SyntaxError in line 25 of /nfs/users/nfs_t/tn6/gitrepo/pf_swga_cnv/src/shell/xhmm.snakefile:
+Command must be given as string after the shell keyword. (xhmm.snakefile, line 25)

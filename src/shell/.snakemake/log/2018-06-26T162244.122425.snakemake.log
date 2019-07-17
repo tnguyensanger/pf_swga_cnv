@@ -1,0 +1,3 @@
+AttributeError in line 21 of /nfs/users/nfs_t/tn6/gitrepo/pf_swga_cnv/src/shell/wgs_cnv.snakemake:
+'str' object has no attribute 'sample_interval_statistics'
+  File "/nfs/users/nfs_t/tn6/gitrepo/pf_swga_cnv/src/shell/wgs_cnv.snakemake", line 21, in <module>

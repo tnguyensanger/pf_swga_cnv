@@ -1,0 +1,4 @@
+Building DAG of jobs...
+MissingInputException in line 19 of /nfs/users/nfs_t/tn6/gitrepo/pf_swga_cnv/src/shell/wgs_cnv.snakemake:
+Missing input files for rule all:
+/lustre/scratch118/malaria/team112/personal/tn6/pf_swga_cnv_wgs/output/depth_of_cov/PH1008-C.unknown.unknown
