@@ -1,3 +1,0 @@
-NameError in line 26 of /nfs/users/nfs_t/tn6/gitrepo/pf_swga_cnv/src/shell/ppq_cnv.snakefile:
-name 'Pf3D7_10_v3' is not defined
-  File "/nfs/users/nfs_t/tn6/gitrepo/pf_swga_cnv/src/shell/ppq_cnv.snakefile", line 26, in <module>
